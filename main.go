@@ -24,7 +24,7 @@ var (
 
 var opts Options
 
-func httpGet(url string, thread, counter int) {
+func httpGet(url string, thread, counter, total int) {
 	request, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		log.Printf("[%03d-%05d] ERROR in http.NewRequest: %v\n", thread, counter, err)
@@ -44,15 +44,20 @@ func httpGet(url string, thread, counter int) {
 	resp.Body.Close()
 	end := time.Now()
 	diff := end.Sub(start).Milliseconds()
-	if opts.Verbose || diff > int64(opts.ShowThresholdMs) {
-		log.Printf("[%03d-%05d] %d %d ms\n", thread, counter, resp.StatusCode, diff)
+	if diff > int64(opts.ShowThresholdMs) {
+		log.Printf("[%03d-%05d] WARN %d %d ms\n", thread, counter, resp.StatusCode, diff)
+	} else if opts.Verbose {
+		log.Printf("[%03d-%05d] INFO %d %d ms\n", thread, counter, resp.StatusCode, diff)
+	}
+	if ! opts.Verbose && counter > 0 && counter % 100 == 0 {
+		log.Printf("[%03d-%05d] INFO %d/%d requests finished\n", thread, counter, counter, total)
 	}
 }
 
 func httpGetWithRandomSleep(url string, thread, count int, wg *sync.WaitGroup) {
 	for i := 0; i < count; i++ {
 		time.Sleep(time.Duration(rand.Intn(opts.SleepMaxMs)) * time.Millisecond)
-		httpGet(url, thread, i)
+		httpGet(url, thread, i, count)
 	}
 	wg.Done()
 }
