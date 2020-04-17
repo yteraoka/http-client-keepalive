@@ -20,6 +20,7 @@ Application Options:
   -v, --verbose                  Enable verbose output. Show response time every request.
   -s, --show-threshold=          Show response time in Millisecond if over this threshold. (default: 200)
   -r, --random-sleep-max-ms=     Max interval sleep time in millisecond. (default: 1000)
+      --servername=              Server Name Indication extension in TLS handshake.
 
 Help Options:
   -h, --help                     Show this help message
