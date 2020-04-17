@@ -78,6 +78,7 @@ type Options struct {
 	Verbose                bool `short:"v" long:"verbose" description:"Enable verbose output. Show response time every request."`
 	ShowThresholdMs        int  `short:"s" long:"show-threshold" default:"200" description:"Show response time in Millisecond if over this threshold."`
 	SleepMaxMs             int  `short:"r" long:"random-sleep-max-ms" default:"1000" description:"Max interval sleep time in millisecond."`
+	ServerName             string `long:"servername" description:"Server Name Indication extension in TLS handshake."`
 	Args                   struct {
 		Url string `description:"URL"`
 	} `positional-args:"yes"`
@@ -102,6 +103,14 @@ func main() {
 		log.Fatal("url parameter required")
 	}
 
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: opts.Insecure,
+	}
+
+	if opts.ServerName != "" {
+		tlsConfig.ServerName = opts.ServerName
+	}
+
 	client.Transport = &http.Transport{
 		DialContext: (&net.Dialer{
 			Timeout:   time.Duration(opts.ConnectTimeoutSec) * time.Second,
@@ -113,9 +122,7 @@ func main() {
 		MaxIdleConnsPerHost: opts.MaxIdleConnsPerHost,
 		MaxConnsPerHost:     opts.MaxConnsPerHost,
 		TLSHandshakeTimeout: time.Duration(opts.TLSHandshakeTimeoutSec) * time.Second,
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: opts.Insecure,
-		},
+		TLSClientConfig: tlsConfig,
 	}
 	client.Timeout = time.Duration(opts.TimeoutSec) * time.Second
 
