@@ -27,13 +27,13 @@ var opts Options
 func httpGet(url string, thread, counter, total int) {
 	request, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		log.Printf("[%03d-%05d] ERROR in http.NewRequest: %v\n", thread, counter, err)
+		log.Printf("[%03d-%05d] ERROR at http.NewRequest: %v\n", thread, counter, err)
 		return
 	}
 	start := time.Now()
 	resp, err := client.Do(request)
 	if err != nil {
-		log.Printf("[%03d-%05d] ERROR in Do(request): %v\n", thread, counter, err)
+		log.Printf("[%03d-%05d] ERROR %d ms at Do(request): %v\n", thread, counter, time.Now().Sub(start).Milliseconds(), err)
 		return
 	}
 	defer func() {
