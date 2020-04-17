@@ -49,13 +49,13 @@ func httpGet(url string, thread, counter, total int) {
 	} else if opts.Verbose {
 		log.Printf("[%03d-%05d] INFO %d %d ms\n", thread, counter, resp.StatusCode, diff)
 	}
-	if ! opts.Verbose && counter > 0 && (counter + 1) % 100 == 0 {
+	if ! opts.Verbose && counter > 0 && counter % 100 == 0 {
 		log.Printf("[%03d-%05d] INFO %d/%d requests finished\n", thread, counter, counter, total)
 	}
 }
 
 func httpGetWithRandomSleep(url string, thread, count int, wg *sync.WaitGroup) {
-	for i := 0; i < count; i++ {
+	for i := 1; i <= count; i++ {
 		time.Sleep(time.Duration(rand.Intn(opts.SleepMaxMs)) * time.Millisecond)
 		httpGet(url, thread, i, count)
 	}
