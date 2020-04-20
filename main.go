@@ -71,7 +71,7 @@ type Options struct {
 	MaxIdleConnsPerHost    int  `long:"max-idle-conns-per-host" default:"2" description:"Max idle connections per host."`
 	MaxConnsPerHost        int  `long:"max-conns-per-host" default:"10" description:"Max connections per host. Zero means no limit."`
 	IdleConnTimeoutSec     int  `long:"idle-conn-timeout" default:"60" description:"Idle connection timeout in second."`
-	KeepAliveIntervalSec   int  `long:"tcp-keepalive-interval" default:"0" description:"TCP keepalive interval in second."`
+	KeepAliveIntervalSec   int  `long:"tcp-keepalive-interval" default:"0" description:"TCP keepalive interval in second. Zero means 15 seconds."`
 	Insecure               bool `short:"k" long:"insecre" description:"Skip TLS cert verify."`
 	TimeoutSec             int  `short:"T" long:"timeout" default:"30" description:"Request total timeout in second."`
 	Version                bool `short:"V" long:"version" description:"Show version and exit."`
