@@ -13,7 +13,8 @@ Application Options:
       --max-idle-conns-per-host= Max idle connections per host. (default: 2)
       --max-conns-per-host=      Max connections per host. Zero means no limit. (default: 10)
       --idle-conn-timeout=       Idle connection timeout in second. (default: 60)
-      --tcp-keepalive-interval=  TCP keepalive interval in second. (default: 0)
+      --tcp-keepalive-interval=  TCP keepalive interval in second. Zero means 15 seconds. (default: 0)
+      --disable-http-keepalive   Disable HTTP Keep-Alive.
   -k, --insecre                  Skip TLS cert verify.
   -T, --timeout=                 Request total timeout in second. (default: 30)
   -V, --version                  Show version and exit.
@@ -21,6 +22,9 @@ Application Options:
   -s, --show-threshold=          Show response time in Millisecond if over this threshold. (default: 200)
   -r, --random-sleep-max-ms=     Max interval sleep time in millisecond. (default: 1000)
       --servername=              Server Name Indication extension in TLS handshake.
+  -m, --method=                  HTTP method {GET|POST|...}. (default: GET)
+      --content-type=            Content-Type in request header.
+      --template=                Request body data template file path.
 
 Help Options:
   -h, --help                     Show this help message

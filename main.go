@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"crypto/tls"
 	"fmt"
 	flags "github.com/jessevdk/go-flags"
@@ -13,6 +14,7 @@ import (
 	"os"
 	"sync"
 	"time"
+	"text/template"
 )
 
 var (
@@ -22,10 +24,30 @@ var (
 	date = "unknown"
 )
 
-var opts Options
+type Data struct {
+	Timestamp string
+	Id string
+}
 
-func httpGet(url string, thread, counter, total int) {
-	request, err := http.NewRequest("GET", url, nil)
+var opts Options
+var tmpl *template.Template
+
+func httpRequest(url string, thread, counter, total int) {
+	buf := new(bytes.Buffer)
+	if opts.TemplateFile != "" {
+		err := tmpl.Execute(buf, Data{
+			Timestamp: time.Now().Format("2006-01-02T15:04:05.000-07:00"),
+			Id: fmt.Sprintf("000%017d", rand.Int63n(99999999999999999)),
+		})
+		if err != nil {
+			panic(err)
+		}
+		// fmt.Printf("%s\n", buf.String())
+	}
+	request, err := http.NewRequest(opts.Method, url, buf)
+	if opts.ContentType != "" {
+		request.Header.Set("content-type", opts.ContentType)
+	}
 	if err != nil {
 		log.Printf("[%03d-%05d] ERROR at http.NewRequest: %v\n", thread, counter, err)
 		return
@@ -54,10 +76,10 @@ func httpGet(url string, thread, counter, total int) {
 	}
 }
 
-func httpGetWithRandomSleep(url string, thread, count int, wg *sync.WaitGroup) {
+func httpRequestWithRandomSleep(url string, thread, count int, wg *sync.WaitGroup) {
 	for i := 1; i <= count; i++ {
 		time.Sleep(time.Duration(rand.Intn(opts.SleepMaxMs)) * time.Millisecond)
-		httpGet(url, thread, i, count)
+		httpRequest(url, thread, i, count)
 	}
 	wg.Done()
 }
@@ -72,6 +94,7 @@ type Options struct {
 	MaxConnsPerHost        int  `long:"max-conns-per-host" default:"10" description:"Max connections per host. Zero means no limit."`
 	IdleConnTimeoutSec     int  `long:"idle-conn-timeout" default:"60" description:"Idle connection timeout in second."`
 	KeepAliveIntervalSec   int  `long:"tcp-keepalive-interval" default:"0" description:"TCP keepalive interval in second. Zero means 15 seconds."`
+	DisableKeepAlives      bool `long:"disable-http-keepalive" description:"Disable HTTP Keep-Alive. "`
 	Insecure               bool `short:"k" long:"insecre" description:"Skip TLS cert verify."`
 	TimeoutSec             int  `short:"T" long:"timeout" default:"30" description:"Request total timeout in second."`
 	Version                bool `short:"V" long:"version" description:"Show version and exit."`
@@ -79,6 +102,9 @@ type Options struct {
 	ShowThresholdMs        int  `short:"s" long:"show-threshold" default:"200" description:"Show response time in Millisecond if over this threshold."`
 	SleepMaxMs             int  `short:"r" long:"random-sleep-max-ms" default:"1000" description:"Max interval sleep time in millisecond."`
 	ServerName             string `long:"servername" description:"Server Name Indication extension in TLS handshake."`
+	Method                 string `short:"m" long:"method" default:"GET" description:"HTTP method {GET|POST|...}."`
+	ContentType            string `long:"content-type" description:"Content-Type in request header."`
+	TemplateFile           string `long:"template" description:"Request body data template file path. "`
 	Args                   struct {
 		Url string `description:"URL"`
 	} `positional-args:"yes"`
@@ -123,14 +149,19 @@ func main() {
 		MaxConnsPerHost:     opts.MaxConnsPerHost,
 		TLSHandshakeTimeout: time.Duration(opts.TLSHandshakeTimeoutSec) * time.Second,
 		TLSClientConfig: tlsConfig,
+		DisableKeepAlives: opts.DisableKeepAlives,
 	}
 	client.Timeout = time.Duration(opts.TimeoutSec) * time.Second
+
+	if opts.TemplateFile != "" {
+		tmpl = template.Must(template.ParseFiles(opts.TemplateFile))
+	}
 
 	wg := sync.WaitGroup{}
 	wg.Add(opts.Threads)
 
 	for i := 0; i < opts.Threads; i++ {
-		go httpGetWithRandomSleep(opts.Args.Url, i, opts.Requests, &wg)
+		go httpRequestWithRandomSleep(opts.Args.Url, i, opts.Requests, &wg)
 	}
 
 	wg.Wait()
