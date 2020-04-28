@@ -56,7 +56,9 @@ func httpGet(url string, thread, counter, total int) {
 
 func httpGetWithRandomSleep(url string, thread, count int, wg *sync.WaitGroup) {
 	for i := 1; i <= count; i++ {
-		time.Sleep(time.Duration(rand.Intn(opts.SleepMaxMs)) * time.Millisecond)
+		if opts.SleepMaxMs > 0 {
+			time.Sleep(time.Duration(rand.Intn(opts.SleepMaxMs)) * time.Millisecond)
+		}
 		httpGet(url, thread, i, count)
 	}
 	wg.Done()
@@ -78,7 +80,7 @@ type Options struct {
 	Version                bool `short:"V" long:"version" description:"Show version and exit."`
 	Verbose                bool `short:"v" long:"verbose" description:"Enable verbose output. Show response time every request."`
 	ShowThresholdMs        int  `short:"s" long:"show-threshold" default:"200" description:"Show response time in Millisecond if over this threshold."`
-	SleepMaxMs             int  `short:"r" long:"random-sleep-max-ms" default:"1000" description:"Max interval sleep time in millisecond."`
+	SleepMaxMs             int  `short:"r" long:"random-sleep-max-ms" default:"0" description:"Max interval sleep time in millisecond."`
 	ServerName             string `long:"servername" description:"Server Name Indication extension in TLS handshake."`
 	Args                   struct {
 		Url string `description:"URL"`
