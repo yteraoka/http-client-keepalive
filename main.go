@@ -69,7 +69,7 @@ type Options struct {
 	Threads                int  `short:"t" long:"threads" default:"1" description:"Number of threads."`
 	ConnectTimeoutSec      int  `long:"connect-timeout" default:"10" description:"Connect timeout in second."`
 	TLSHandshakeTimeoutSec int  `long:"tls-handshake-timeout" default:"10" description:"TLS handshake timeout in second."`
-	MaxIdleConns           int  `long:"max-idle-conns" default:"2" description:"Max idle connections. Zero means no limit."`
+	MaxIdleConns           int  `long:"max-idle-conns" default:"2" description:"Max idle connections. Zero means no limit. Override with max-idle-conns-per-host if max-idle-conns-per-host is greater than max-idle-conns"`
 	MaxIdleConnsPerHost    int  `long:"max-idle-conns-per-host" default:"2" description:"Max idle connections per host."`
 	MaxConnsPerHost        int  `long:"max-conns-per-host" default:"10" description:"Max connections per host. Zero means no limit."`
 	IdleConnTimeoutSec     int  `long:"idle-conn-timeout" default:"60" description:"Idle connection timeout in second."`
@@ -112,6 +112,10 @@ func main() {
 
 	if opts.ServerName != "" {
 		tlsConfig.ServerName = opts.ServerName
+	}
+
+	if opts.MaxIdleConns > 0 && opts.MaxIdleConnsPerHost > opts.MaxIdleConns {
+		opts.MaxIdleConns = opts.MaxIdleConnsPerHost
 	}
 
 	client.Transport = &http.Transport{
