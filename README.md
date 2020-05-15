@@ -9,8 +9,7 @@ Application Options:
   -t, --threads=                 Number of threads. (default: 1)
       --connect-timeout=         Connect timeout in second. (default: 10)
       --tls-handshake-timeout=   TLS handshake timeout in second. (default: 10)
-      --max-idle-conns=          Max idle connections. Zero means no limit. Override with
-                                 max-idle-conns-per-host if max-idle-conns-per-host is greater than
+      --max-idle-conns=          Max idle connections. Zero means no limit. Override with max-idle-conns-per-host if max-idle-conns-per-host is greater than
                                  max-idle-conns (default: 2)
       --max-idle-conns-per-host= Max idle connections per host. (default: 2)
       --max-conns-per-host=      Max connections per host. Zero means no limit. (default: 10)
@@ -24,6 +23,7 @@ Application Options:
   -s, --show-threshold=          Show response time in Millisecond if over this threshold. (default: 200)
   -r, --random-sleep-max-ms=     Max interval sleep time in millisecond. (default: 0)
       --servername=              Server Name Indication extension in TLS handshake.
+      --trace=                   Set httptrace log level in (1,2,3). The Larger, more verbose.
 
 Help Options:
   -h, --help                     Show this help message

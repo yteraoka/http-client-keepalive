@@ -10,6 +10,7 @@ import (
 	"math/rand"
 	"net"
 	"net/http"
+	"net/http/httptrace"
 	"os"
 	"sync"
 	"time"
@@ -24,8 +25,74 @@ var (
 
 var opts Options
 
+func traceGetConn(hostPort string) {
+	if opts.Trace >= 3 {
+		log.Printf("GetConn: %+v\n", hostPort)
+	}
+}
+
+func traceGotConn(connInfo httptrace.GotConnInfo) {
+	if opts.Trace >= 2 {
+		log.Printf("GotConn: LocalAddr:%v, RemoteAddr:%v, Reused:%v, WasIdle:%v, IdlwTime:%dms",
+				connInfo.Conn.LocalAddr(),
+				connInfo.Conn.RemoteAddr(),
+				connInfo.Reused,
+				connInfo.WasIdle,
+				connInfo.IdleTime.Milliseconds())
+	}
+}
+
+func traceConnectStart(network, addr string) {
+	if opts.Trace >= 3 {
+		log.Printf("ConnectStart: connecting to %v %v\n", network, addr)
+	}
+}
+
+func traceConnectDone(network, addr string, err error) {
+	if err == nil {
+		if opts.Trace >= 3 {
+			log.Printf("ConnectDone: connected to %v %v\n", network, addr)
+		}
+	} else {
+		log.Printf("ConnectDone: connected to %v %v, error:%v\n", network, addr, err)
+	}
+}
+
+func traceTLSHandshakeDone(state tls.ConnectionState, err error) {
+	if err == nil {
+		if opts.Trace >= 3 {
+			log.Printf("TLSHandshakeDone: version:%v, complete:%v, resume:%v\n",
+					state.Version,
+					state.HandshakeComplete,
+					state.DidResume)
+		}
+	} else {
+		log.Printf("TLSHandshakeDone: error:%v\n", err)
+	}
+}
+
+func tracePutIdleConn(err error) {
+	if err != nil {
+		log.Printf("PutIdleConn: error:%v\n", err)
+	}
+}
+
 func httpGet(url string, thread, counter, total int) {
 	request, err := http.NewRequest("GET", url, nil)
+	if opts.Trace > 0 {
+		trace := &httptrace.ClientTrace{
+			GetConn: traceGetConn,
+			GotConn: traceGotConn,
+			ConnectStart: traceConnectStart,
+			ConnectDone: traceConnectDone,
+			TLSHandshakeDone: traceTLSHandshakeDone,
+			PutIdleConn: tracePutIdleConn,
+		}
+		request = request.WithContext(httptrace.WithClientTrace(request.Context(), trace))
+		if _, err := client.Transport.RoundTrip(request); err != nil {
+			log.Fatal(err)
+		}
+	}
 	if err != nil {
 		log.Printf("[%03d-%05d] ERROR at http.NewRequest: %v\n", thread, counter, err)
 		return
@@ -82,6 +149,7 @@ type Options struct {
 	ShowThresholdMs        int  `short:"s" long:"show-threshold" default:"200" description:"Show response time in Millisecond if over this threshold."`
 	SleepMaxMs             int  `short:"r" long:"random-sleep-max-ms" default:"0" description:"Max interval sleep time in millisecond."`
 	ServerName             string `long:"servername" description:"Server Name Indication extension in TLS handshake."`
+	Trace                  int  `long:"trace" description:"Set httptrace log level in (1,2,3). The Larger, more verbose."`
 	Args                   struct {
 		Url string `description:"URL"`
 	} `positional-args:"yes"`
