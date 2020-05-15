@@ -150,7 +150,7 @@ type Options struct {
 	IdleConnTimeoutSec     int  `long:"idle-conn-timeout" default:"60" description:"Idle connection timeout in second."`
 	KeepAliveIntervalSec   int  `long:"tcp-keepalive-interval" default:"0" description:"TCP keepalive interval in second. Zero means 15 seconds."`
 	DisableKeepAlives      bool `long:"disable-http-keepalive" description:"Disable HTTP Keep-Alive. "`
-	Insecure               bool `short:"k" long:"insecre" description:"Skip TLS cert verify."`
+	Insecure               bool `short:"k" long:"insecure" description:"Skip TLS cert verify."`
 	TimeoutSec             int  `short:"T" long:"timeout" default:"30" description:"Request total timeout in second."`
 	Version                bool `short:"V" long:"version" description:"Show version and exit."`
 	Verbose                bool `short:"v" long:"verbose" description:"Enable verbose output. Show response time every request."`
