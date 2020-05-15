@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/http/httptrace"
 	"os"
+	"strings"
 	"sync"
 	"time"
 )
@@ -72,7 +73,14 @@ func traceTLSHandshakeDone(state tls.ConnectionState, err error) {
 }
 
 func tracePutIdleConn(err error) {
-	if err != nil {
+	if err == nil {
+		return
+	}
+	if strings.Contains(err.Error(), "too many idle connections for host") {
+		if opts.Trace >= 2 {
+			log.Printf("PutIdleConn: error:%v\n", err)
+		}
+	} else {
 		log.Printf("PutIdleConn: error:%v\n", err)
 	}
 }
