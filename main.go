@@ -97,9 +97,6 @@ func httpGet(url string, thread, counter, total int) {
 			PutIdleConn: tracePutIdleConn,
 		}
 		request = request.WithContext(httptrace.WithClientTrace(request.Context(), trace))
-		if _, err := client.Transport.RoundTrip(request); err != nil {
-			log.Fatal(err)
-		}
 	}
 	if err != nil {
 		log.Printf("[%03d-%05d] ERROR at http.NewRequest: %v\n", thread, counter, err)
