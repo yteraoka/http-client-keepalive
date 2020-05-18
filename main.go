@@ -26,6 +26,24 @@ var (
 
 var opts Options
 
+func traceDNSStart(info httptrace.DNSStartInfo) {
+	if opts.Trace >= 3 {
+		log.Printf("DNSStart: %+v\n", info.Host)
+	}
+}
+
+func traceDNSDone(info httptrace.DNSDoneInfo) {
+	if info.Err != nil {
+		if opts.Trace >= 1 {
+			log.Printf("DNSDone: %+v\n", info.Err)
+		}
+	} else {
+		if opts.Trace >= 3 {
+			log.Printf("DNSDone: addrs:%+v, Coalesced:%v\n", info.Addrs, info.Coalesced)
+		}
+	}
+}
+
 func traceGetConn(hostPort string) {
 	if opts.Trace >= 3 {
 		log.Printf("GetConn: %+v\n", hostPort)
@@ -89,6 +107,8 @@ func httpGet(url string, thread, counter, total int) {
 	request, err := http.NewRequest("GET", url, nil)
 	if opts.Trace > 0 {
 		trace := &httptrace.ClientTrace{
+			DNSStart: traceDNSStart,
+			DNSDone: traceDNSDone,
 			GetConn: traceGetConn,
 			GotConn: traceGotConn,
 			ConnectStart: traceConnectStart,
