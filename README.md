@@ -21,7 +21,8 @@ Application Options:
   -V, --version                  Show version and exit.
   -v, --verbose                  Enable verbose output. Show response time every request.
   -s, --show-threshold=          Show response time in Millisecond if over this threshold. (default: 200)
-  -r, --random-sleep-max-ms=     Max interval sleep time in millisecond. (default: 0)
+  -r, --random-sleep-max-ms=     Max interval sleep time in millisecond. (DEPRECATED) (default: 0)
+  -S, --sleep-range-ms=          Range of andom sleep time (min:max) in millisecond. (default: 0:0)
       --servername=              Server Name Indication extension in TLS handshake.
       --trace=                   Set httptrace log level in (1,2,3). The Larger, more verbose.
 

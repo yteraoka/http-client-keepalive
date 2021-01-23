@@ -13,6 +13,8 @@ import (
 	"net/http/httptrace"
 	"os"
 	"sync"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -68,10 +70,14 @@ func httpGet(url string, thread, counter, total int) {
 	}
 }
 
-func httpGetWithRandomSleep(url string, thread, count int, wg *sync.WaitGroup) {
+func httpGetWithRandomSleep(url string, thread, count, sleepMin, sleepMax int, wg *sync.WaitGroup) {
 	for i := 1; i <= count; i++ {
-		if opts.SleepMaxMs > 0 {
-			time.Sleep(time.Duration(rand.Intn(opts.SleepMaxMs)) * time.Millisecond)
+		if i > 1 && (sleepMin > 0 || sleepMax > 0) {
+			if sleepMax == sleepMin {
+				time.Sleep(time.Duration(sleepMin) * time.Millisecond)
+			} else {
+				time.Sleep(time.Duration(sleepMin + rand.Intn(sleepMax - sleepMin)) * time.Millisecond)
+			}
 		}
 		httpGet(url, thread, i, count)
 	}
@@ -94,7 +100,8 @@ type Options struct {
 	Version                bool `short:"V" long:"version" description:"Show version and exit."`
 	Verbose                bool `short:"v" long:"verbose" description:"Enable verbose output. Show response time every request."`
 	ShowThresholdMs        int  `short:"s" long:"show-threshold" default:"200" description:"Show response time in Millisecond if over this threshold."`
-	SleepMaxMs             int  `short:"r" long:"random-sleep-max-ms" default:"0" description:"Max interval sleep time in millisecond."`
+	SleepMaxMs             int  `short:"r" long:"random-sleep-max-ms" default:"0" description:"Max interval sleep time in millisecond. (DEPRECATED)"`
+	SleepRangeMs           string `short:"S" long:"sleep-range-ms" default:"0:0" description:"Range of andom sleep time (min:max) in millisecond."`
 	ServerName             string `long:"servername" description:"Server Name Indication extension in TLS handshake."`
 	Trace                  int  `long:"trace" description:"Set httptrace log level in (1,2,3). The Larger, more verbose."`
 	Args                   struct {
@@ -133,6 +140,25 @@ func main() {
 		opts.MaxIdleConns = opts.MaxIdleConnsPerHost
 	}
 
+	sleepMin := 0
+	sleepMax := 0
+
+	if strings.Contains(opts.SleepRangeMs, ":") {
+		s := strings.Split(opts.SleepRangeMs, ":")
+		sleepMin, err = strconv.Atoi(s[0])
+		if err != nil {
+			log.Fatalf("Invalid sleep range: %v", opts.SleepRangeMs)
+		}
+		sleepMax, err = strconv.Atoi(s[1])
+		if err != nil {
+			log.Fatalf("Invalid sleep range: %v", opts.SleepRangeMs)
+		}
+	}
+	if opts.SleepMaxMs > 0 {
+		sleepMin = 0
+		sleepMax = opts.SleepMaxMs
+	}
+
 	client.Transport = &http.Transport{
 		DialContext: (&net.Dialer{
 			Timeout:   time.Duration(opts.ConnectTimeoutSec) * time.Second,
@@ -153,7 +179,7 @@ func main() {
 	wg.Add(opts.Threads)
 
 	for i := 0; i < opts.Threads; i++ {
-		go httpGetWithRandomSleep(opts.Args.Url, i, opts.Requests, &wg)
+		go httpGetWithRandomSleep(opts.Args.Url, i, opts.Requests, sleepMin, sleepMax, &wg)
 	}
 
 	wg.Wait()
