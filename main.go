@@ -183,4 +183,6 @@ func main() {
 	}
 
 	wg.Wait()
+
+	client.CloseIdleConnections()
 }
