@@ -81,6 +81,15 @@ func httpGetWithRandomSleep(url string, thread, count, sleepMin, sleepMax int, w
 		}
 		httpGet(url, thread, i, count)
 	}
+	if opts.SleepAtEnd {
+		if (sleepMin > 0 || sleepMax > 0) {
+			if sleepMax == sleepMin {
+				time.Sleep(time.Duration(sleepMin) * time.Millisecond)
+			} else {
+				time.Sleep(time.Duration(sleepMin + rand.Intn(sleepMax - sleepMin)) * time.Millisecond)
+			}
+		}
+	}
 	wg.Done()
 }
 
@@ -102,6 +111,7 @@ type Options struct {
 	ShowThresholdMs        int  `short:"s" long:"show-threshold" default:"200" description:"Show response time in Millisecond if over this threshold."`
 	SleepMaxMs             int  `short:"r" long:"random-sleep-max-ms" default:"0" description:"Max interval sleep time in millisecond. (DEPRECATED)"`
 	SleepRangeMs           string `short:"S" long:"sleep-range-ms" default:"0:0" description:"Range of andom sleep time (min:max) in millisecond."`
+	SleepAtEnd             bool `long:"sleep-at-end" description:"Sleep at end."`
 	ServerName             string `long:"servername" description:"Server Name Indication extension in TLS handshake."`
 	Trace                  int  `long:"trace" description:"Set httptrace log level in (1,2,3). The Larger, more verbose."`
 	Args                   struct {
