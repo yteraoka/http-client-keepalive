@@ -5,7 +5,6 @@ import (
 	"fmt"
 	flags "github.com/jessevdk/go-flags"
 	"io"
-	"io/ioutil"
 	"log"
 	"math/rand"
 	"net"
@@ -53,10 +52,13 @@ func httpGet(url string, thread, counter, total int) {
 		return
 	}
 	defer func() {
-		io.Copy(ioutil.Discard, resp.Body)
+		io.Copy(io.Discard, resp.Body)
 		resp.Body.Close()
 	}()
-	io.Copy(ioutil.Discard, resp.Body)
+	_, err = io.Copy(io.Discard, resp.Body)
+	if err != nil {
+		log.Printf("[%03d-%05d] ERROR %s\n", thread, counter, err)
+	}
 	resp.Body.Close()
 	end := time.Now()
 	diff := end.Sub(start).Milliseconds()
