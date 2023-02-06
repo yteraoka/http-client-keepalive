@@ -67,17 +67,17 @@ func httpGet(reqUrl url.URL, thread, counter, total int) {
 		io.Copy(io.Discard, resp.Body)
 		resp.Body.Close()
 	}()
-	_, err = io.Copy(io.Discard, resp.Body)
+	reads, err := io.Copy(io.Discard, resp.Body)
 	if err != nil {
-		log.Printf("[%03d-%05d] ERROR %s %s\n", thread, counter, err, urlStr)
+		log.Printf("[%03d-%05d] ERROR read %d bytes, %s %s\n", thread, counter, reads, err, urlStr)
 	}
 	resp.Body.Close()
 	end := time.Now()
 	diff := end.Sub(start).Milliseconds()
 	if diff > int64(opts.ShowThresholdMs) {
-		log.Printf("[%03d-%05d] WARN %03d %5d ms %s\n", thread, counter, resp.StatusCode, diff, urlStr)
+		log.Printf("[%03d-%05d] WARN %03d %5d ms, %d bytes, %s\n", thread, counter, resp.StatusCode, diff, reads, urlStr)
 	} else if opts.Verbose {
-		log.Printf("[%03d-%05d] INFO %03d %5d ms %s\n", thread, counter, resp.StatusCode, diff, urlStr)
+		log.Printf("[%03d-%05d] INFO %03d %5d ms, %d bytes, %s\n", thread, counter, resp.StatusCode, diff, reads, urlStr)
 	}
 	if ! opts.Verbose && counter > 0 && counter % 100 == 0 {
 		log.Printf("[%03d-%05d] INFO %d/%d requests finished\n", thread, counter, counter, total)
