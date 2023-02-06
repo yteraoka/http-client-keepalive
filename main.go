@@ -10,11 +10,13 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptrace"
+	"net/url"
 	"os"
 	"sync"
 	"strconv"
 	"strings"
 	"time"
+	"github.com/google/uuid"
 )
 
 var (
@@ -26,8 +28,18 @@ var (
 
 var opts Options
 
-func httpGet(url string, thread, counter, total int) {
-	request, err := http.NewRequest("GET", url, nil)
+func httpGet(reqUrl url.URL, thread, counter, total int) {
+	if opts.UUID {
+		values := reqUrl.Query()
+		u, err := uuid.NewRandom()
+		if err != nil {
+			log.Fatalf("Failed to generate UUID: %s", err)
+		}
+		values.Set("uuid", u.String())
+		reqUrl.RawQuery = values.Encode()
+	}
+	urlStr := reqUrl.String()
+	request, err := http.NewRequest("GET", urlStr, nil)
 	if opts.Trace > 0 {
 		trace := &httptrace.ClientTrace{
 			DNSStart: traceDNSStart,
@@ -42,13 +54,13 @@ func httpGet(url string, thread, counter, total int) {
 		request = request.WithContext(httptrace.WithClientTrace(request.Context(), trace))
 	}
 	if err != nil {
-		log.Printf("[%03d-%05d] ERROR at http.NewRequest: %v\n", thread, counter, err)
+		log.Printf("[%03d-%05d] ERROR at http.NewRequest: %v %s\n", thread, counter, err, urlStr)
 		return
 	}
 	start := time.Now()
 	resp, err := client.Do(request)
 	if err != nil {
-		log.Printf("[%03d-%05d] ERROR %d ms at Do(request): %v\n", thread, counter, time.Now().Sub(start).Milliseconds(), err)
+		log.Printf("[%03d-%05d] ERROR %d ms at Do(request): %v %s\n", thread, counter, time.Now().Sub(start).Milliseconds(), err, urlStr)
 		return
 	}
 	defer func() {
@@ -57,22 +69,22 @@ func httpGet(url string, thread, counter, total int) {
 	}()
 	_, err = io.Copy(io.Discard, resp.Body)
 	if err != nil {
-		log.Printf("[%03d-%05d] ERROR %s\n", thread, counter, err)
+		log.Printf("[%03d-%05d] ERROR %s %s\n", thread, counter, err, urlStr)
 	}
 	resp.Body.Close()
 	end := time.Now()
 	diff := end.Sub(start).Milliseconds()
 	if diff > int64(opts.ShowThresholdMs) {
-		log.Printf("[%03d-%05d] WARN %d %d ms\n", thread, counter, resp.StatusCode, diff)
+		log.Printf("[%03d-%05d] WARN %03d %5d ms %s\n", thread, counter, resp.StatusCode, diff, urlStr)
 	} else if opts.Verbose {
-		log.Printf("[%03d-%05d] INFO %d %d ms\n", thread, counter, resp.StatusCode, diff)
+		log.Printf("[%03d-%05d] INFO %03d %5d ms %s\n", thread, counter, resp.StatusCode, diff, urlStr)
 	}
 	if ! opts.Verbose && counter > 0 && counter % 100 == 0 {
 		log.Printf("[%03d-%05d] INFO %d/%d requests finished\n", thread, counter, counter, total)
 	}
 }
 
-func httpGetWithRandomSleep(url string, thread, count, sleepMin, sleepMax int, wg *sync.WaitGroup) {
+func httpGetWithRandomSleep(reqUrl url.URL, thread, count, sleepMin, sleepMax int, wg *sync.WaitGroup) {
 	for i := 1; i <= count; i++ {
 		if i > 1 && (sleepMin > 0 || sleepMax > 0) {
 			if sleepMax == sleepMin {
@@ -81,7 +93,7 @@ func httpGetWithRandomSleep(url string, thread, count, sleepMin, sleepMax int, w
 				time.Sleep(time.Duration(sleepMin + rand.Intn(sleepMax - sleepMin)) * time.Millisecond)
 			}
 		}
-		httpGet(url, thread, i, count)
+		httpGet(reqUrl, thread, i, count)
 	}
 	if opts.SleepAtEnd {
 		if (sleepMin > 0 || sleepMax > 0) {
@@ -116,6 +128,7 @@ type Options struct {
 	SleepAtEnd             bool `long:"sleep-at-end" description:"Sleep at end."`
 	ServerName             string `long:"servername" description:"Server Name Indication extension in TLS handshake."`
 	Trace                  int  `long:"trace" description:"Set httptrace log level in (1,2,3). The Larger, more verbose."`
+	UUID                   bool `long:"uuid" description:"Add uuid query string to identify each request."`
 	Args                   struct {
 		Url string `description:"URL"`
 	} `positional-args:"yes"`
@@ -171,6 +184,11 @@ func main() {
 		sleepMax = opts.SleepMaxMs
 	}
 
+	reqUrl, err := url.ParseRequestURI(opts.Args.Url)
+	if err != nil {
+		log.Fatalf("Failed to ParseRequestURL(%s): %s", opts.Args.Url, err)
+	}
+
 	client.Transport = &http.Transport{
 		DialContext: (&net.Dialer{
 			Timeout:   time.Duration(opts.ConnectTimeoutSec) * time.Second,
@@ -191,7 +209,7 @@ func main() {
 	wg.Add(opts.Threads)
 
 	for i := 0; i < opts.Threads; i++ {
-		go httpGetWithRandomSleep(opts.Args.Url, i, opts.Requests, sleepMin, sleepMax, &wg)
+		go httpGetWithRandomSleep(*reqUrl, i, opts.Requests, sleepMin, sleepMax, &wg)
 	}
 
 	wg.Wait()
