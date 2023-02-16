@@ -73,6 +73,9 @@ func httpGet(reqUrl url.URL, thread, counter, total int) {
 	}
 	resp.Body.Close()
 	end := time.Now()
+	if opts.Trace >= 3 {
+		log.Printf("[%03d-%05d] DEBUG response header: %#v, %s\n", thread, counter, reads, resp.Header, urlStr)
+	}
 	diff := end.Sub(start).Milliseconds()
 	if diff > int64(opts.ShowThresholdMs) {
 		log.Printf("[%03d-%05d] WARN %03d %5d ms, %d bytes, %s\n", thread, counter, resp.StatusCode, diff, reads, urlStr)
