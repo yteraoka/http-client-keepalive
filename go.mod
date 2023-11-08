@@ -3,7 +3,7 @@ module github.com/yteraoka/http-client-keepalive
 go 1.19
 
 require (
-	github.com/google/uuid v1.3.1
+	github.com/google/uuid v1.4.0
 	github.com/jessevdk/go-flags v1.5.0
 )
 
