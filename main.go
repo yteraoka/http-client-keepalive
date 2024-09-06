@@ -192,7 +192,7 @@ func main() {
 		log.Fatalf("Failed to ParseRequestURL(%s): %s", opts.Args.Url, err)
 	}
 
-	client.Transport = &http.Transport{
+	transport := &http.Transport{
 		DialContext: (&net.Dialer{
 			Timeout:   time.Duration(opts.ConnectTimeoutSec) * time.Second,
 			KeepAlive: time.Duration(opts.KeepAliveIntervalSec) * time.Second,
@@ -206,6 +206,18 @@ func main() {
 		TLSClientConfig: tlsConfig,
 		DisableKeepAlives: opts.DisableKeepAlives,
 	}
+
+	if os.Getenv("HTTP_PROXY") != "" {
+		proxyUrl, err := url.Parse(os.Getenv("HTTP_PROXY"))
+		if err != nil {
+			log.Printf("WARN invalid HTTP_PROXY: %v", err)
+		} else {
+			transport.Proxy = http.ProxyURL(proxyUrl)
+		}
+	}
+
+	client.Transport = transport
+
 	client.Timeout = time.Duration(opts.TimeoutSec) * time.Second
 
 	wg := sync.WaitGroup{}
