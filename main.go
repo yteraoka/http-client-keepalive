@@ -60,7 +60,7 @@ func httpGet(reqUrl url.URL, thread, counter, total int) {
 	start := time.Now()
 	resp, err := client.Do(request)
 	if err != nil {
-		log.Printf("[%03d-%05d] ERROR %d ms at Do(request): %v %s\n", thread, counter, time.Now().Sub(start).Milliseconds(), err, urlStr)
+		log.Printf("[%03d-%05d] ERROR %d ms at Do(request): %v %s\n", thread, counter, time.Since(start).Milliseconds(), err, urlStr)
 		return
 	}
 	defer func() {
