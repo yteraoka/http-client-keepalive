@@ -32,3 +32,10 @@ Help Options:
 Arguments:
   Url:                           URL
 ```
+
+use HTTP Proxy
+
+```
+HTTP_PROXY=http://192.168.1.1:3128 http-client-keepalive https://example.com/
+HTTP_PROXY=http://user:password@192.168.1.1:3128 http-client-keepalive https://example.com/
+```
