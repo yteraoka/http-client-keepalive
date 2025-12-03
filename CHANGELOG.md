@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.5.2](https://github.com/yteraoka/http-client-keepalive/compare/v0.5.1...v0.5.2) - 2025-12-03
+- Update actions/checkout action to v5.0.1 by @renovate[bot] in https://github.com/yteraoka/http-client-keepalive/pull/67
+- Update actions/setup-go action to v6.1.0 by @renovate[bot] in https://github.com/yteraoka/http-client-keepalive/pull/68
+- Update actions/checkout action to v6 by @renovate[bot] in https://github.com/yteraoka/http-client-keepalive/pull/70
+- Update actions/create-github-app-token action to v2.2.0 by @renovate[bot] in https://github.com/yteraoka/http-client-keepalive/pull/71
+- Update actions/checkout action to v6.0.1 by @renovate[bot] in https://github.com/yteraoka/http-client-keepalive/pull/72
+- Update dependency golang to v1.25.5 by @renovate[bot] in https://github.com/yteraoka/http-client-keepalive/pull/73
+- Update dependency go to v1.25.5 by @renovate[bot] in https://github.com/yteraoka/http-client-keepalive/pull/74
+
 ## [v0.5.1](https://github.com/yteraoka/http-client-keepalive/compare/v0.5.0...v0.5.1) - 2025-11-08
 - tagpr の導入 by @yteraoka in https://github.com/yteraoka/http-client-keepalive/pull/49
 - fix log.Printf() args by @yteraoka in https://github.com/yteraoka/http-client-keepalive/pull/50
